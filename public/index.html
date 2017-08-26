@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <!-- Compiled and minified CSS -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.1/css/materialize.min.css" rel="stylesheet">
+
+  <title>ARCH Reimbursement</title>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-wrapper">
+      <a href="#" class="brand-logo">ARCH Reimbursement</a>
+      <ul id="nav-mobile" class="right hide-on-med-and-down">
+        <li><a href="/admin">Admin</a></li>
+        <li><a href="/how">How does this work?</a></li>
+        <li><a href="/auth/logout">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container">
+    <header>
+      <h1>ARCH Reimbursement</h1>
+    </header>
+    <main>
+
+      <!-- <div class="progress">
+        <div class="indeterminate"></div>
+      </div> -->
+
+      <div id='login' style="display: none;">
+        <a class="waves-effect waves-light btn-large" href="/auth">Login with Discord</a>
+      </div>
+
+      <div id='claims' style="display: none;">
+        <div class="card-panel flow-text">Enter the Kill ID from the albion Killboard. We only need the number part of it.</div>
+
+        <div class="row">
+        </div>
+          <div class="row">
+          <form action="#">
+            <div class="row">
+              <div class="input-field col s10">
+                <input type="text" id='kill-id' pattern="[0-9]+" placeholder="Kill ID" />
+              </div>
+              <div class="input-field col s2">
+                <button type="submit" id='add-claim' class="btn waves-effect waves-light">Claim</button>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="row">
+          <table id='claims-data' class="responsive-table highlight">
+            <thead>
+              <tr>
+                <th>Event ID</th>
+                <th>State</th>
+                <th>Last updated</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-copyright">
+        <div class="container">
+        © 2014 Copyright Text
+        <a class="right" href="#!">Issues @ PsyKzz#4695 on Discord</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.1/js/materialize.min.js"></script>
+  <script>
+  (function(window, $){
+    function isLoggedIn(next) {
+      next = next || function(){}
+
+      fetch('http://localhost:3000/api/status', {credentials: 'include'})
+      .then(res => res.json())
+      .then(json => {
+        json.forEach(item => {
+          $('#claims-data tbody').append(`<tr>
+            <td>${item.eventId}</td>
+            <td>${item.state}</td>
+            <td>${item.updatedAt}</td>
+            <td><a href='https://albiononline.com/en/killboard/kill/${item.eventId}'><i class="material-icons open_in_new">open_in_new</i></a></td></tr>`)
+        })
+
+        $('#login').hide()
+        $('#claims').show()
+        next()
+      })
+    }
+    function notLoggedIn() {
+      $('#login').show()
+      $('#claims').hide()
+    }
+
+    $(function() {
+      fetch('http://localhost:3000/api/profile', {credentials: 'include'})
+      .then(res => res.json())
+      .then(json => {
+          if(json.status == 'error') {
+          console.log(json)
+          return notLoggedIn();
+        }
+        isLoggedIn();
+      })
+    });
+
+    $('#add-claim').on('click', (e) => {
+      var killId = $('#kill-id').val();
+      fetch(`http://localhost:3000/api/${killId}/claim`, {credentials: 'include'})
+      .then(res => res.json())
+      .then(json => {
+        if(json.status == 'error') {
+          console.log(json)
+          return
+        }
+        window.location.reload();
+      })
+    })
+  }(window, jQuery))
+  </script>
+</body>
+</html>
